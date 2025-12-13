@@ -1,0 +1,102 @@
+from typing import Optional
+from fastapi.params import Depends
+from typing_extensions import Annotated
+from fastapi import APIRouter
+
+from app.adapter.mendeley.mendeley_manager import new_mendeley_manager
+from app.config import settings
+from app.adapter.mendeley.token_provider import new_mendeley_token_provider
+from app.database.session import get_session
+from app.repositories.oauth_token_repository import new_oauth_token_repository
+from app.usecase.mendeley.dto import ListDocumentsInputDTO, RedirectInputDTO
+from app.usecase.mendeley.list_documents import (
+    MendeleyListDocumentsUseCase,
+    new_list_documents_usecase,
+)
+from app.usecase.mendeley.login_usecase import LoginUsecase
+from app.usecase.mendeley.redirect_usecase import RedirectUsecase, new_redirect_usecase
+
+
+v1_router = APIRouter()
+
+
+def get_redirect_usecase(session=Depends(get_session)):
+    oauth_token_repository = new_oauth_token_repository(session)
+
+    mendeley_token_provider = new_mendeley_token_provider(
+        settings.MENDELEY_CLIENT_ID,
+        settings.MENDELEY_CLIENT_SECRET,
+        f"{settings.SERVER_URL}/v1/oauth/mendeley/callback",
+        settings.MENDELEY_TOKEN_URL,
+        oauth_token_repository,
+    )
+
+    redirect_usecase = new_redirect_usecase(
+        TokenProvider=mendeley_token_provider,
+        redirect_uri=f"{settings.SERVER_URL}/v1/oauth/mendeley/callback",
+    )
+
+    return redirect_usecase
+
+
+def get_mendeley_list_documents_usecase(session=Depends(get_session)):
+    oauth_token_repository = new_oauth_token_repository(session)
+
+    mendeley_token_provider = new_mendeley_token_provider(
+        settings.MENDELEY_CLIENT_ID,
+        settings.MENDELEY_CLIENT_SECRET,
+        f"{settings.SERVER_URL}/v1/oauth/mendeley/callback",
+        settings.MENDELEY_TOKEN_URL,
+        oauth_token_repository,
+    )
+
+    mendeley_manager = new_mendeley_manager(
+        token_provider=mendeley_token_provider,
+    )
+
+    list_documents_usecase = new_list_documents_usecase(
+        mendeley_manager=mendeley_manager,
+    )
+
+    return list_documents_usecase
+
+
+def get_mendeley_login_usecase() -> LoginUsecase:
+    return LoginUsecase(
+        client_id=settings.MENDELEY_CLIENT_ID,
+        redirect_uri=f"{settings.SERVER_URL}/v1/oauth/mendeley/callback",
+    )
+
+
+@v1_router.get("/oauth/mendeley/callback")
+async def mendeley_oauth_callback(
+    code: str,
+    usecase: Annotated[RedirectUsecase, Depends(get_redirect_usecase)],
+    state: Optional[str] = None,
+):
+    input_dto = RedirectInputDTO(code=code, state=state or "")
+    output_dto = await usecase.execute(input_dto)
+
+    print("OAuth Token Received:", output_dto)
+
+    return output_dto
+
+
+@v1_router.get("/mendeley/documents")
+async def list_mendeley_documents(
+    usecase: Annotated[
+        MendeleyListDocumentsUseCase,
+        Depends(get_mendeley_list_documents_usecase),
+    ],
+):
+    input_dto = ListDocumentsInputDTO(page=1)
+    output_dto = await usecase.execute(input_dto)
+
+    return output_dto
+
+
+@v1_router.get("/mendeley/login")
+async def mendeley_login(
+    usecase: Annotated[LoginUsecase, Depends(get_mendeley_login_usecase)],
+):
+    await usecase.execute(None)

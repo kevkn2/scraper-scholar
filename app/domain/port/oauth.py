@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.domain.entities.oauth import OAuthToken, RequestOAuthToken
+from app.domain.entities.oauth import OAuthToken, RefreshOAuthToken, RequestOAuthToken
 
 
 class TokenProvider(ABC):
@@ -10,4 +10,8 @@ class TokenProvider(ABC):
 
     @abstractmethod
     def use_access_token(self) -> OAuthToken:
+        pass
+
+    @abstractmethod
+    def refresh_token(self, refresh_input: RefreshOAuthToken) -> OAuthToken:
         pass

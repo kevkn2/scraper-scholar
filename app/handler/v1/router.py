@@ -1,5 +1,6 @@
 from typing import Optional
 from fastapi.params import Depends
+from fastapi.responses import RedirectResponse
 from typing_extensions import Annotated
 from fastapi import APIRouter
 
@@ -7,14 +8,20 @@ from app.adapter.mendeley.mendeley_manager import new_mendeley_manager
 from app.config import settings
 from app.adapter.mendeley.token_provider import new_mendeley_token_provider
 from app.database.session import get_session
+from app.domain.entities.mendeley.reference_manager import MendeleyDocument
+from app.domain.port.usecase import Usecase
 from app.repositories.oauth_token_repository import new_oauth_token_repository
-from app.usecase.mendeley.dto import ListDocumentsInputDTO, RedirectInputDTO
+from app.usecase.mendeley.dto import (
+    ListDocumentsInputDTO,
+    ListDocumentsOutputDTO,
+    RedirectInputDTO,
+    RedirectOutputDTO,
+)
 from app.usecase.mendeley.list_documents import (
-    MendeleyListDocumentsUseCase,
     new_list_documents_usecase,
 )
 from app.usecase.mendeley.login_usecase import LoginUsecase
-from app.usecase.mendeley.redirect_usecase import RedirectUsecase, new_redirect_usecase
+from app.usecase.mendeley.redirect_usecase import new_redirect_usecase
 
 
 v1_router = APIRouter()
@@ -61,7 +68,7 @@ def get_mendeley_list_documents_usecase(session=Depends(get_session)):
     return list_documents_usecase
 
 
-def get_mendeley_login_usecase() -> LoginUsecase:
+def get_mendeley_login_usecase():
     return LoginUsecase(
         client_id=settings.MENDELEY_CLIENT_ID,
         redirect_uri=f"{settings.SERVER_URL}/v1/oauth/mendeley/callback",
@@ -71,7 +78,9 @@ def get_mendeley_login_usecase() -> LoginUsecase:
 @v1_router.get("/oauth/mendeley/callback")
 async def mendeley_oauth_callback(
     code: str,
-    usecase: Annotated[RedirectUsecase, Depends(get_redirect_usecase)],
+    usecase: Annotated[
+        Usecase[RedirectInputDTO, RedirectOutputDTO], Depends(get_redirect_usecase)
+    ],
     state: Optional[str] = None,
 ):
     input_dto = RedirectInputDTO(code=code, state=state or "")
@@ -85,7 +94,7 @@ async def mendeley_oauth_callback(
 @v1_router.get("/mendeley/documents")
 async def list_mendeley_documents(
     usecase: Annotated[
-        MendeleyListDocumentsUseCase,
+        Usecase[ListDocumentsInputDTO, ListDocumentsOutputDTO[MendeleyDocument]],
         Depends(get_mendeley_list_documents_usecase),
     ],
 ):
@@ -97,6 +106,7 @@ async def list_mendeley_documents(
 
 @v1_router.get("/mendeley/login")
 async def mendeley_login(
-    usecase: Annotated[LoginUsecase, Depends(get_mendeley_login_usecase)],
+    usecase: Annotated[Usecase[None, str], Depends(get_mendeley_login_usecase)],
 ):
-    await usecase.execute(None)
+    url = await usecase.execute(None)
+    return RedirectResponse(url)

@@ -1,13 +1,14 @@
 from typing import List
 
-import requests
 from app.domain.entities.mendeley.reference_manager import (
     Author,
     Identifiers,
     MendeleyDocument,
 )
+from app.domain.entities.oauth import OAuthToken, RefreshOAuthToken
 from app.domain.port.oauth import TokenProvider
 from app.domain.port.reference_manager import ReferenceManager
+from app.utils.request_utils import request_with_refresh
 
 
 class MendeleyManager(ReferenceManager[MendeleyDocument]):
@@ -17,21 +18,31 @@ class MendeleyManager(ReferenceManager[MendeleyDocument]):
     ):
         self.token_provider = token_provider
 
-    async def _get_access_token(self) -> str:
+    async def _get_access_token(self) -> OAuthToken:
         token = await self.token_provider.use_access_token()
-        return token.access_token
+        return token
+
+    async def _refresh_access_token(self, existing_token: OAuthToken) -> OAuthToken:
+        new_token = await self.token_provider.refresh_token(
+            RefreshOAuthToken(
+                refresh_token=existing_token.refresh_token,
+                grant_type="refresh_token",
+            )
+        )
+        return new_token
 
     async def get_documents(self) -> List[MendeleyDocument]:
-        access_token = await self._get_access_token()
-        r = requests.get(
-            "https://api.mendeley.com/documents",
+        token = await self._get_access_token()
+
+        r = await request_with_refresh(
+            url="https://api.mendeley.com/documents",
+            method="GET",
             headers={
-                "Authorization": f"Bearer {access_token}",
+                "Authorization": f"Bearer {token.access_token}",
                 "Accept": "application/vnd.mendeley-document.1+json",
             },
-            timeout=10,
+            refresh_callback=lambda: self._refresh_access_token(token),
         )
-        r.raise_for_status()
 
         return [
             MendeleyDocument(

@@ -46,6 +46,21 @@ class OAuthTokenRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def update_tokens(
+        self,
+        provider: str,
+        access_token: str,
+        refresh_token: str | None,
+        expires_in: int,
+    ):
+        token = await self.get_by_provider(provider)
+
+        token.access_token = access_token
+        token.refresh_token = refresh_token
+        token.expires_at = datetime.now() + timedelta(seconds=expires_in)
+
+        await self.session.commit()
+
 
 def new_oauth_token_repository(session: AsyncSession) -> OAuthTokenRepository:
     return OAuthTokenRepository(session=session)

@@ -1,9 +1,7 @@
-import requests
-from app.domain.entities.oauth import OAuthToken, RequestOAuthToken
+from app.domain.entities.oauth import OAuthToken, RefreshOAuthToken, RequestOAuthToken
 from app.domain.port.oauth import TokenProvider
 from app.repositories.oauth_token_repository import OAuthTokenRepository
-
-# from app.exception.token_provider import FailedToGetTokenException
+from app.utils.request_utils import request_token
 
 
 class MendeleyTokenProvider(TokenProvider):
@@ -22,18 +20,10 @@ class MendeleyTokenProvider(TokenProvider):
         self.oauth_token_repository = oauth_token_repository
 
     async def get_token(self, request_input: RequestOAuthToken) -> OAuthToken:
-        response = requests.post(
-            self.token_url,
+        response = await request_token(
             data=request_input.model_dump(),
             auth=(self.client_id, self.client_secret),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=10,
         )
-
-        print(response.status_code)
-
-        # if response.status_code != 200:
-        #     FailedToGetTokenException()
 
         payload = response.json()
         await self.oauth_token_repository.upsert_token(
@@ -54,6 +44,26 @@ class MendeleyTokenProvider(TokenProvider):
             access_token=oauth_token.access_token,
             refresh_token=oauth_token.refresh_token,
             expires_in=oauth_token.expires_at.timetuple().tm_sec,
+        )
+
+    async def refresh_token(self, refresh_input: RefreshOAuthToken) -> OAuthToken:
+        response = await request_token(
+            data=refresh_input.model_dump(),
+            auth=(self.client_id, self.client_secret),
+        )
+
+        payload = response.json()
+        await self.oauth_token_repository.update_tokens(
+            provider="mendeley",
+            access_token=payload["access_token"],
+            refresh_token=payload.get("refresh_token"),
+            expires_in=payload["expires_in"],
+        )
+
+        return OAuthToken(
+            access_token=payload["access_token"],
+            refresh_token=payload["refresh_token"],
+            expires_in=payload["expires_in"],
         )
 
 

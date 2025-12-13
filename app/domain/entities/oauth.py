@@ -7,6 +7,11 @@ class RequestOAuthToken(BaseModel):
     redirect_uri: str
 
 
+class RefreshOAuthToken(BaseModel):
+    refresh_token: str
+    grant_type: str
+
+
 class OAuthToken(BaseModel):
     access_token: str
     refresh_token: str

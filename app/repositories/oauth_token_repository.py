@@ -4,9 +4,10 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.oauth_token import OAuthTokenModel
+from app.repositories.interfaces import IOAuthTokenRepository
 
 
-class OAuthTokenRepository:
+class OAuthTokenRepository(IOAuthTokenRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -52,7 +53,7 @@ class OAuthTokenRepository:
         access_token: str,
         refresh_token: str | None,
         expires_in: int,
-    ):
+    ) -> None:
         token = await self.get_by_provider(provider)
 
         token.access_token = access_token

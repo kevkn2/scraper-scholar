@@ -1,7 +1,7 @@
 from app.domain.entities.oauth import OAuthToken, RefreshOAuthToken, RequestOAuthToken
 from app.domain.port.oauth import TokenProvider
+from app.pkg.utils.request_utils import request_token
 from app.repositories.oauth_token_repository import OAuthTokenRepository
-from app.utils.request_utils import request_token
 
 
 class MendeleyTokenProvider(TokenProvider):

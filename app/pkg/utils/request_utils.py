@@ -41,3 +41,19 @@ async def request_token(
 
         response.raise_for_status()
         return response
+
+
+async def async_fetch(
+    url: str,
+    method: str,
+    headers: Optional[Dict[str, str]] = None,
+    data: Optional[Dict[str, Any]] = None,
+    cookies: Optional[httpx.Cookies] = None,
+) -> httpx.Response:
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method, url, headers=headers, data=data, cookies=cookies
+        )
+
+        response.raise_for_status()
+        return response

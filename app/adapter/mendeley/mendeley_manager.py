@@ -8,7 +8,7 @@ from app.domain.entities.mendeley.reference_manager import (
 from app.domain.entities.oauth import OAuthToken, RefreshOAuthToken
 from app.domain.port.oauth import TokenProvider
 from app.domain.port.reference_manager import ReferenceManager
-from app.utils.request_utils import request_with_refresh
+from app.pkg.utils.request_utils import request_with_refresh
 
 
 class MendeleyManager(ReferenceManager[MendeleyDocument]):

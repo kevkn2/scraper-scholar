@@ -1,7 +1,7 @@
 from app.domain.entities.oauth import OAuthToken, RefreshOAuthToken, RequestOAuthToken
 from app.domain.port.oauth import TokenProvider
 from app.pkg.utils.request_utils import request_token
-from app.repositories.oauth_token_repository import OAuthTokenRepository
+from app.repositories.interfaces import IOAuthTokenRepository
 
 
 class MendeleyTokenProvider(TokenProvider):
@@ -11,7 +11,7 @@ class MendeleyTokenProvider(TokenProvider):
         client_secret: str,
         redirect_uri: str,
         token_url: str,
-        oauth_token_repository: OAuthTokenRepository,
+        oauth_token_repository: IOAuthTokenRepository,
     ):
         self.client_id = client_id
         self.client_secret = client_secret
@@ -72,8 +72,8 @@ def new_mendeley_token_provider(
     client_secret: str,
     redirect_uri: str,
     token_url: str,
-    oauth_token_repository: OAuthTokenRepository,
-) -> MendeleyTokenProvider:
+    oauth_token_repository: IOAuthTokenRepository,
+):
     return MendeleyTokenProvider(
         client_id=client_id,
         client_secret=client_secret,

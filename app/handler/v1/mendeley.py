@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from app.adapter.mendeley.mendeley_manager import new_mendeley_manager
 from app.config import settings
-from app.adapter.mendeley.token_provider import new_mendeley_token_provider
+from app.adapter.provider.mendeley_token_provider import new_mendeley_token_provider
 from app.database.db_session import get_db_session
 from app.domain.constants.mendeley import MENDELEY_REDIRECT_URL
 from app.domain.entities.mendeley.reference_manager import MendeleyDocument

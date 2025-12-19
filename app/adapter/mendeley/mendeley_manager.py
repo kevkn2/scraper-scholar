@@ -18,19 +18,6 @@ class MendeleyManager(ReferenceManager[MendeleyDocument]):
     ):
         self.token_provider = token_provider
 
-    async def _get_access_token(self) -> OAuthToken:
-        token = await self.token_provider.use_access_token()
-        return token
-
-    async def _refresh_access_token(self, existing_token: OAuthToken) -> OAuthToken:
-        new_token = await self.token_provider.refresh_token(
-            RefreshOAuthToken(
-                refresh_token=existing_token.refresh_token,
-                grant_type="refresh_token",
-            )
-        )
-        return new_token
-
     async def get_documents(self) -> List[MendeleyDocument]:
         token = await self._get_access_token()
 
@@ -66,6 +53,19 @@ class MendeleyManager(ReferenceManager[MendeleyDocument]):
             )
             for doc in r.json()
         ]
+
+    async def _get_access_token(self) -> OAuthToken:
+        token = await self.token_provider.use_access_token()
+        return token
+
+    async def _refresh_access_token(self, existing_token: OAuthToken) -> OAuthToken:
+        new_token = await self.token_provider.refresh_token(
+            RefreshOAuthToken(
+                refresh_token=existing_token.refresh_token,
+                grant_type="refresh_token",
+            )
+        )
+        return new_token
 
 
 def new_mendeley_manager(

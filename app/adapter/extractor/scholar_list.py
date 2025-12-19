@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 from bs4 import Tag
 from app.domain.entities.scholar.crawl_result import ScholarData
 from app.domain.port.extractor import Extractor

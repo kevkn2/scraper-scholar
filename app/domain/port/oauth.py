@@ -6,12 +6,12 @@ from app.domain.entities.oauth import OAuthToken, RefreshOAuthToken, RequestOAut
 class TokenProvider(ABC):
     @abstractmethod
     def get_token(self, request_input: RequestOAuthToken) -> OAuthToken:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def use_access_token(self) -> OAuthToken:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def refresh_token(self, refresh_input: RefreshOAuthToken) -> OAuthToken:
-        pass
+        raise NotImplementedError()

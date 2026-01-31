@@ -11,7 +11,7 @@ from app.database.db_session import get_db_session
 from app.domain.constants.mendeley import MENDELEY_REDIRECT_URL
 from app.domain.entities.mendeley.reference_manager import MendeleyDocument
 from app.domain.port.usecase import Usecase
-from app.repositories.oauth_token_repository import new_oauth_token_repository
+from app.repositories.adapter.oauth_token_repository import new_oauth_token_repository
 from app.usecase.mendeley.dto import (
     ListDocumentsInputDTO,
     ListDocumentsOutputDTO,

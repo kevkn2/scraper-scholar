@@ -5,8 +5,12 @@ from fastapi.params import Depends
 from app.adapter.crawler.scholar_list import new_scholar_list_crawler
 from app.adapter.crawler.scholar_main import new_scholar_main_crawler
 from app.adapter.extractor.scholar_list import new_scholar_list_extractor
+from app.database.db_session import get_db_session
 from app.domain.port.usecase import Usecase
-from app.repositories.scholar_cookie_repository import new_scholar_cookie_repository
+from app.repositories.adapter.articles_repository import new_articles_repository
+from app.repositories.adapter.scholar_cookie_repository import (
+    new_scholar_cookie_repository,
+)
 from app.usecase.scholar.dto import (
     ScholarListSearchInputDTO,
     ScholarListSearchOutputDTO,
@@ -29,14 +33,17 @@ def get_scholar_get_cookies_usecase():
     return scholar_get_cookies_usecase
 
 
-def get_scholar_list_search_usecase():
+def get_scholar_list_search_usecase(session=Depends(get_db_session)):
     scholar_cookie_repository = new_scholar_cookie_repository()
     scholar_list_crawler = new_scholar_list_crawler(
         extractor=new_scholar_list_extractor()
     )
+    articles_repository = new_articles_repository(session=session)
+
     scholar_list_search_usecase = new_scholar_list_search_usecase(
         scholar_cookie_repository=scholar_cookie_repository,
         scholar_list_crawler=scholar_list_crawler,
+        articles_repository=articles_repository,
     )
 
     return scholar_list_search_usecase

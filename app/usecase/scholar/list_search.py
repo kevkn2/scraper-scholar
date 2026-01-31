@@ -7,7 +7,7 @@ from app.domain.port.crawler import WebCrawler
 from app.domain.port.usecase import Usecase
 from app.pkg.shared.headers import HEADERS
 from app.pkg.utils.http_utils import create_list_cookies_data
-from app.repositories.interfaces import IScholarCookieRepository
+from app.repositories.interfaces import IArticlesRepository, IScholarCookieRepository
 from app.usecase.scholar.dto import (
     ScholarListSearchInputDTO,
     ScholarListSearchOutputDTO,
@@ -21,9 +21,11 @@ class ScholarListSearchUsecase(
         self,
         scholar_list_crawler: WebCrawler[ScholarCrawlResult],
         scholar_cookie_repository: IScholarCookieRepository,
+        articles_repository: IArticlesRepository,
     ):
         self.scholar_list_crawler = scholar_list_crawler
         self.scholar_cookie_repository = scholar_cookie_repository
+        self.articles_repository = articles_repository
 
     async def execute(
         self, input_dto: ScholarListSearchInputDTO
@@ -52,6 +54,9 @@ class ScholarListSearchUsecase(
         fetch_output = await self.scholar_list_crawler.fetch_page(fetch_input)
         crawl_result = self.scholar_list_crawler.extract_page(fetch_output)
 
+        # Save articles to the DB
+        await self.articles_repository.upsert_articles(crawl_result.articles)
+
         # Prepare output DTO
         output_dto = ScholarListSearchOutputDTO(articles=crawl_result.articles)
 
@@ -61,5 +66,8 @@ class ScholarListSearchUsecase(
 def new_scholar_list_search_usecase(
     scholar_list_crawler: WebCrawler[ScholarCrawlResult],
     scholar_cookie_repository: IScholarCookieRepository,
+    articles_repository: IArticlesRepository,
 ):
-    return ScholarListSearchUsecase(scholar_list_crawler, scholar_cookie_repository)
+    return ScholarListSearchUsecase(
+        scholar_list_crawler, scholar_cookie_repository, articles_repository
+    )

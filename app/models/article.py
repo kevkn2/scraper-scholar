@@ -1,5 +1,6 @@
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Integer, String
+import uuid
+from sqlalchemy import UUID, Column, DateTime, Integer, String
 from app.domain.entities.scholar.crawl_result import ScholarData
 from app.models.base_model import Base
 
@@ -7,7 +8,7 @@ from app.models.base_model import Base
 class ArticleModel(Base):
     __tablename__ = "articles"
 
-    id = Column(String, primary_key=True, index=True)
+    id = Column(UUID, default=uuid.uuid4, primary_key=True, index=True)
     title = Column(String(500), nullable=False, index=True)
     url = Column(String(2048), unique=True, nullable=False)
     authors = Column(String(1000), nullable=False)  # Comma-separated author names

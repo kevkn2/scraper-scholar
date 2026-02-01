@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,7 @@ class OAuthTokenRepository(IOAuthTokenRepository):
             token.scope = scope
         else:
             token = OAuthTokenModel(
-                id=provider,
+                id=str(uuid.uuid4()),
                 provider=provider,
                 access_token=access_token,
                 refresh_token=refresh_token,

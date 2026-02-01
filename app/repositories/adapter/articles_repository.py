@@ -22,7 +22,6 @@ class ArticlesRepository(IArticlesRepository):
             # Prepare article data
             article_data = [
                 {
-                    "id": uuid.uuid4().hex,
                     "title": article.title,
                     "url": article.url,
                     "year": article.year,

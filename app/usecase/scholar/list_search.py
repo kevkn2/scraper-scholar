@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 from fastapi import HTTPException
+from app.domain.constants import scholar
 from app.domain.entities.crawler import FetchInput
-from app.domain.entities.http import CookieData
 from app.domain.entities.scholar.crawl_result import ScholarCrawlResult
 from app.domain.port.crawler import WebCrawler
 from app.domain.port.usecase import Usecase
@@ -31,7 +31,7 @@ class ScholarListSearchUsecase(
         self, input_dto: ScholarListSearchInputDTO
     ) -> ScholarListSearchOutputDTO:
         # Construct the search URL
-        search_url = f"https://scholar.google.com/scholar?q={input_dto.query}"
+        search_url = scholar.SCHOLAR_LIST_URL.format(input_dto.query)
 
         cookies: Optional[Dict[str, str]] = (
             await self.scholar_cookie_repository.get_cookies()
